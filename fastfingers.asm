@@ -10,25 +10,34 @@
 .eqv 	MASK_CAUSE_KEYBOARD 0x0000034 # Keyboard Cause
 .data	
 	time: 		.word 0x2710	# 10s
-	msg_dialog: 	.asciiz "Start"
+	msg_dialog1: 	.asciiz "Start"
+	msg_dialog2:	.asciiz "Again"
 	test:		.asciiz "Pham Ngoc Thach Bach Khoa Ha Noi"
-	list:		.word 0,6,91,79,102,109,125,7,127,111	# de ve tren den lep 7 doan
+	list:		.word 63,6,91,79,102,109,125,7,127,111	# de ve tren den lep 7 doan
 .text
  	li $k0, KEY_CODE
  	li $k1, KEY_READY
 
  	li $s0, DISPLAY_CODE
  	li $s1, DISPLAY_READY
- 	la $s6, test	# dia chi xau test
-	
- 	la $a0, msg_dialog
+ 	
+ 	la $a0, msg_dialog1
  	li $v0, 50
  	syscall
  	beq $a0, $zero, start
  	j end
 start :
+
+	# reset
+	la $s6, test	# dia chi xau test
 	add $s2, $zero, $zero	# bien dem so ki tu nhap dung
-			
+	add $a0, $zero, $zero
+ 	li $t0, SEVENSEG_LEFT # assign port's address
+ 	sb $a0, 0($t0) # assign new value
+ 	add $a0, $zero, $zero
+ 	li $t0, SEVENSEG_RIGHT # assign port's address
+ 	sb $a0, 0($t0) # assign new value
+ 					
 	li $v0, 30
 	syscall
 	move $s7, $a0		# thoi gian bat dau
@@ -36,7 +45,7 @@ start :
 	lw $t0, 0($a0)
 	add $s7, $s7, $t0	# thoi gian ket thuc 
 loop: 	nop
-	WaitForKey: 
+	WaitForKey:
 		li $v0, 30
 		syscall
 		slt $t0, $s7, $a0
@@ -61,7 +70,7 @@ end:
  	lw $a0, 0($s2)
  	li $t0, SEVENSEG_RIGHT # assign port's address
  	sb $a0, 0($t0) # assign new value
- 	j exit
+ 	j again
  	two:	
  		addi $s1, $s1, 1
  		subi $s2, $s2, 10
@@ -80,6 +89,11 @@ end:
  		lw $a0, 0($s2)
  		li $t0, SEVENSEG_RIGHT # assign port's address
  		sb $a0, 0($t0) # assign new value
+ 	again:	
+ 		la $a0, msg_dialog2
+ 		li $v0, 50
+ 		syscall
+ 		beq $a0, $zero, start	
  	exit:
  		li $v0, 10
  		syscall
